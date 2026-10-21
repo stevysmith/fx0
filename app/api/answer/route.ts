@@ -1,7 +1,7 @@
 import { answerQuestion } from '../../../lib/agent'
 import { withSessionRoute } from '../../../lib/route-auth'
 
-export const maxDuration = 300
+export const maxDuration = 800
 
 export const POST = withSessionRoute(async (request, { host }) => {
   let body: { qid?: unknown; answers?: unknown }

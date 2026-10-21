@@ -12,7 +12,7 @@ import { TRIAL_MODEL, usesFreePrompts } from '../../../lib/trial-policy'
 import { DEFAULT_MODEL, log } from '../../../lib/session'
 import { PROMPT_TEXT_LIMIT_ERROR, PROMPT_TEXT_MAX_BYTES, promptTextBytes } from '../../../lib/prompt-limits'
 
-export const maxDuration = 300
+export const maxDuration = 800
 
 // libfx stores each prompt, images included, before it acknowledges it; this
 // keeps one prompt's images well inside its stored-input limits.

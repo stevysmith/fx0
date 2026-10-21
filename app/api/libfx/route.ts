@@ -1,9 +1,8 @@
 import { agent } from '../../../lib/agent'
 
 // Each delivery runs a turn until this deadline, and the next invocation runs
-// the rest. 300 seconds is the Hobby plan's limit (Pro allows 800). libfx reads
-// each invocation's deadline from Vercel, so it follows whatever this says.
-export const maxDuration = 300
+// the rest.
+export const maxDuration = 800
 
 // Vercel Queues delivers here the turns no request runs itself (the trigger is
 // in vercel.json): the rest of a turn that outlasted its prompt request, and a
