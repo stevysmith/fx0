@@ -6,6 +6,8 @@ fx0 is also a working example of an app built on libfx. [One `createFxAgent()` c
 
 Try it at [fx0.vercel.dev](https://fx0.vercel.dev), or clone it and make it your own.
 
+> **This fork adds "send privately" to the share menu.** One click puts the design on [Stacktree](https://stacktr.ee) at a private link behind a passcode, with no account, and copies a message with both for your client. When the agent writes a new version, the same link and passcode show it. The menu says when the client has opened the link or left comments. The link lasts 24 hours unless you keep it. The code is in [`lib/stacktree.ts`](lib/stacktree.ts) and [`components/private-link.tsx`](components/private-link.tsx).
+
 ## Features
 
 - Sign in with Vercel to bill model calls through [AI Gateway](https://vercel.com/docs/ai-gateway) to your own team.

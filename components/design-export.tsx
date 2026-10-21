@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { AuthRouteError, fetchUi } from './auth-ui'
 import { IconCheck, IconCopy, IconShare } from './geist-icons'
+import { linkItem, usePrivateLink } from './private-link'
 import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
@@ -24,9 +25,9 @@ type Notice = { tone: 'status' | 'error'; text: string }
 
 export const DROP_URL = 'https://vercel.com/drop'
 
-// Copies, downloads or hands to Vercel Drop the design the preview shows: a past
-// version when one is pinned (`revision`), else the latest (`latest`, which also keys
-// the cached HTML).
+// Copies, downloads, hands to Vercel Drop or sends privately with Stacktree the design
+// the preview shows: a past version when one is pinned (`revision`), else the latest
+// (`latest`, which also keys the cached HTML).
 export default function DesignExport({
   sessionId,
   revision,
@@ -61,6 +62,10 @@ export default function DesignExport({
     }
     return cached.current!.html
   }
+
+  const shown = revision ?? latest
+  const privateLink = usePrivateLink({ sessionId, shown, load, onNotice })
+  const privateItem = linkItem(privateLink.link, privateLink.activity, shown)
 
   async function copy() {
     setOpen(false)
@@ -178,7 +183,28 @@ export default function DesignExport({
           </svg>
           publish with Drop
         </button>
+        <button
+          type="button"
+          // A plain click, not fastClick: the dialog it opens would take the click that
+          // follows pointer-down as a click outside, and close.
+          onClick={() => {
+            setOpen(false)
+            privateLink.act()
+          }}
+          className="flex min-h-8 w-full items-start gap-2 px-2.5 py-1.5 text-left text-sm outline-none hover:bg-accent focus-visible:bg-accent"
+        >
+          <svg viewBox="0 0 16 16" className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+            <rect x="3" y="7" width="10" height="7" />
+            <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+          </svg>
+          <span className="min-w-0">
+            {privateItem.label}
+            <span className="block truncate text-xs text-muted-foreground">{privateItem.detail}</span>
+          </span>
+        </button>
       </PopoverContent>
+      {/* Portalled to the body: only its state lives in the menu. */}
+      {privateLink.dialog}
     </Popover>
   )
 }

@@ -1173,6 +1173,89 @@ test('publish with Drop opens Vercel Drop inside the click, before the design lo
   assert.equal(DROP_URL, 'https://vercel.com/drop')
 })
 
+test('send privately makes one link per chat, then updates it in place with each new version', async (t) => {
+  const { STACKTREE_API } = await import(pathToFileURL(join(output, 'lib/stacktree.js')).href)
+  const page = `${STACKTREE_API}/sites/site_1`
+  const designs = { 2: '<p>v2</p>', 3: '<p>v3</p>' }
+  let latest = 2
+  let state = 'live'
+  const stacktree = []
+  const ui = browser(t, {
+    // The latest design, whichever version that is.
+    '/api/artifact?session=chat-1': () => new Response(designs[latest]),
+    [`${STACKTREE_API}/sites`]: (init) => {
+      stacktree.push({ method: init.method, body: JSON.parse(init.body), headers: init.headers })
+      return Response.json({ id: 'site_1', url: 'https://stacktr.ee/p/tok/', claim_token: 'claim_1', keep_url: 'https://stacktr.ee/keep/tok', expires_at_iso: '2999-01-01T00:00:00Z' }, { status: 201 })
+    },
+    [page]: (init) => {
+      stacktree.push({ method: init.method, body: JSON.parse(init.body), headers: init.headers })
+      return Response.json({ id: 'site_1', expires_at_iso: '2999-01-01T00:00:00Z' })
+    },
+    [`${page}/activity`]: () => Response.json({ state, opened: true, first_opened_at: new Date().toISOString(), comments: { open: 1, total: 1 }, expires_at_iso: '2999-01-01T00:00:00Z' }),
+  })
+  globalThis.localStorage = ui.storage
+  t.after(() => { delete globalThis.localStorage })
+  const { default: DesignExport } = await import(pathToFileURL(join(output, 'components/design-export.js')).href)
+  const view = renderHooks(DesignExport)
+  const props = { sessionId: 'chat-1', revision: null, latest: 2, title: 'Coffee', onNotice() {} }
+  const text = (node) => typeof node === 'string' ? node : React.Children.toArray(node?.props?.children).map(text).join(' ')
+  const item = (tree) => find(tree, (node) => node.type === 'button' && /private/.test(text(node)))
+  const label = (tree) => text(item(tree)).replace(/\s+/g, ' ').trim()
+  const dialog = (tree) => find(tree, (node) => node.props?.phase && 'activity' in node.props).props
+  const settle = async () => { for (let i = 0; i < 5; i++) await tick() }
+
+  let tree = view.render(props)
+  view.flush()
+  assert.equal(label(tree), 'send privately with Stacktree')
+  // A plain click: on pointer-down the dialog would take the click as one outside it.
+  assert.equal(item(tree).props.onPointerDown, undefined)
+
+  item(tree).props.onClick()
+  assert.equal(dialog(view.render(props)).phase.name, 'working')
+  await settle()
+  tree = view.render(props)
+  assert.deepEqual(dialog(tree).phase, { name: 'ready', updated: false })
+  assert.equal(dialog(tree).link.url, 'https://stacktr.ee/p/tok/')
+  const passcode = dialog(tree).link.passcode
+  assert.deepEqual(stacktree[0].body, { html: designs[2], password: passcode, agent: 'fx0' })
+  assert.match(stacktree[0].headers['idempotency-key'], /^[0-9a-f-]{36}$/)
+  assert.equal(JSON.parse(ui.storage.getItem('fx0:stacktree:chat-1')).revision, 2, 'the chat remembers its link')
+  assert.equal(label(tree), 'private link not opened yet')
+
+  // A reload finds the link and asks Stacktree whether the client opened it.
+  const reloaded = renderHooks(DesignExport)
+  reloaded.render(props)
+  reloaded.flush()
+  await settle()
+  assert.equal(label(reloaded.render(props)), 'private link 1 comment waiting')
+
+  // The agent writes version 3: one click sends it to the same link and passcode.
+  latest = 3
+  const next = { ...props, latest }
+  tree = reloaded.render(next)
+  assert.equal(label(tree), 'send new version same private link')
+  item(tree).props.onClick()
+  await settle()
+  tree = reloaded.render(next)
+  assert.deepEqual(dialog(tree).phase, { name: 'ready', updated: true })
+  assert.equal(stacktree.length, 2, 'no second page')
+  assert.equal(stacktree[1].method, 'PUT')
+  assert.equal(stacktree[1].headers.authorization, 'Claim claim_1')
+  assert.deepEqual(stacktree[1].body, { html: designs[3] })
+  assert.equal(dialog(tree).link.passcode, passcode)
+  assert.equal(label(tree), 'private link 1 comment waiting')
+
+  // The day is up: the open dialog says so and offers a new link, and so does the menu.
+  state = 'expired'
+  item(tree).props.onClick()
+  await settle()
+  tree = reloaded.render(next)
+  assert.equal(dialog(tree).phase.title, 'This link has ended')
+  assert.equal(dialog(tree).phase.action, 'Send a new link')
+  assert.equal(label(tree), 'send privately with Stacktree')
+  assert.equal(ui.storage.getItem('fx0:stacktree:chat-1'), null)
+})
+
 // Sign-out intentionally closes this document's shared auth gate until reload.
 test('signout immediately clears the app, fences late boot data and offers retry on failure', async (t) => {
   const response = Promise.withResolvers()
