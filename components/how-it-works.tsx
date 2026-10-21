@@ -6,7 +6,7 @@ import { buttonVariants } from './ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 
-export const REPO_URL = 'https://github.com/vercel-labs/fx0'
+export const REPO_URL = 'https://github.com/stevysmith/fx0'
 
 function External({ href, children }: { href: string; children: ReactNode }) {
   return (
