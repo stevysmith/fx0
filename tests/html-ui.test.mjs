@@ -160,7 +160,7 @@ test('empty artifact preview explains how fx0 works', () => {
     onClose: () => {},
   }))
   assert.match(markup, /<h2[^>]*>fx0<\/h2>/)
-  assert.match(markup, /href="https:\/\/github\.com\/vercel-labs\/fx0\/fork"/)
+  assert.match(markup, /href="https:\/\/github\.com\/stevysmith\/fx0\/fork"/)
   // No design yet, so no frame.
   assert.doesNotMatch(markup, /<iframe|preparing|retry/)
 })

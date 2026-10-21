@@ -2,11 +2,11 @@ import { createSessionEventStream } from '../../../lib/event-stream'
 import { followChat, renewTurnCredential } from '../../../lib/agent'
 import { withSessionRoute } from '../../../lib/route-auth'
 
-export const maxDuration = 800
+export const maxDuration = 300
 // A stream left open by a suspended tab or a dropped network otherwise runs until
 // maxDuration and fails with a runtime timeout. Ending it well before then keeps
 // that cost short; a connected client resumes from its last seq within a second.
-const STREAM_LIFETIME_MS = 300_000
+const STREAM_LIFETIME_MS = 240_000
 
 export const GET = withSessionRoute(async (request, { id: sessionId, host }) => {
   const requestedAfter = Number(new URL(request.url).searchParams.get('after') ?? 0)

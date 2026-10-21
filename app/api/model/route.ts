@@ -4,7 +4,7 @@ import { withSessionRoute } from '../../../lib/route-auth'
 
 import { log } from '../../../lib/session'
 
-export const maxDuration = 800
+export const maxDuration = 300
 
 // One route for the session's shared generation settings; each field is independent.
 export const GET = withSessionRoute(async (_request, { host }) => {
