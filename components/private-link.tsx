@@ -138,8 +138,10 @@ export function usePrivateLink({
     setPhase({ name: 'working', text: 'Updating the link…' })
     try {
       const html = await load()
-      remember(await updatePrivately(of, html, shown))
+      const next = await updatePrivately(of, html, shown)
+      remember(next)
       show({ name: 'ready', updated: true })
+      void refresh(next)
     } catch (error) {
       if (error instanceof StacktreeError && error.gone) {
         remember(null)
@@ -205,7 +207,7 @@ export function usePrivateLink({
       onClose={close}
     />
   )
-  return { link, activity, act, dialog }
+  return { link, activity, act, dialog, refresh: () => void refresh() }
 }
 
 function CopyRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {

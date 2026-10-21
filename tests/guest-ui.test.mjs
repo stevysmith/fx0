@@ -1222,6 +1222,11 @@ test('send privately makes one link per chat, then updates it in place with each
   assert.equal(JSON.parse(ui.storage.getItem('fx0:stacktree:chat-1')).revision, 2, 'the chat remembers its link')
   assert.equal(label(tree), 'private link not opened yet')
 
+  // Opening the menu asks Stacktree again, so it shows what the client did since.
+  find(tree, (node) => node.props?.modal && node.props?.onOpenChange).props.onOpenChange(true)
+  await settle()
+  assert.equal(label(view.render(props)), 'private link 1 comment waiting')
+
   // A reload finds the link and asks Stacktree whether the client opened it.
   const reloaded = renderHooks(DesignExport)
   reloaded.render(props)

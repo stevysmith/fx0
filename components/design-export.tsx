@@ -67,6 +67,13 @@ export default function DesignExport({
   const privateLink = usePrivateLink({ sessionId, shown, load, onNotice })
   const privateItem = linkItem(privateLink.link, privateLink.activity, shown)
 
+  // Opening the menu reads the design, so Copy can write in the same click, and
+  // asks Stacktree whether the private link has been opened since.
+  function opening() {
+    void load().catch(() => {})
+    privateLink.refresh()
+  }
+
   async function copy() {
     setOpen(false)
     const html = load()
@@ -124,7 +131,7 @@ export default function DesignExport({
       open={open}
       onOpenChange={(next) => {
         setOpen(next)
-        if (next) void load().catch(() => {})
+        if (next) opening()
       }}
     >
       {/* The tooltip would cover the open menu. */}
@@ -138,7 +145,7 @@ export default function DesignExport({
               onPointerDown={(event) => {
                 if (event.button !== 0) return
                 event.preventDefault()
-                if (!open) void load().catch(() => {})
+                if (!open) opening()
                 setOpen(!open)
               }}
               onClick={(event) => {
